@@ -2,3 +2,4 @@ pyserial
 flask
 mediapipe
 requests
+pygame
