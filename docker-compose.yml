@@ -1,0 +1,19 @@
+services:
+  ugv:
+    image: custom-container
+    runtime: nvidia
+    network_mode: host
+    privileged: true
+    working_dir: /home/ws
+    ports:
+      - "23:23"
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - UGV_MODEL=ugv_rover
+    volumes:
+      - /home/jetson/:/home/ws
+      - /dev:/dev
+      - ./entrypoint.sh:/usr/local/bin/entrypoint.sh:ro
+    entrypoint: ["/usr/local/bin/entrypoint.sh"]
+    command: ["/usr/sbin/sshd","-D","-e","-p","23"]
