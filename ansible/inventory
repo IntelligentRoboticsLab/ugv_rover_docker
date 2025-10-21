@@ -3,3 +3,4 @@ init ansible_host=192.168.50.5 ansible_user=jetson ansible_password=jetson
 
 [rovers]
 rover-05 ansible_host=192.168.0.195 ansible_user=jetson ansible_password=jetson
+rover-08 ansible_host=192.168.0.105 ansible_user=jetson ansible_password=jetson

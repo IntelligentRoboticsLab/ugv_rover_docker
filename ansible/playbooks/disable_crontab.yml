@@ -26,3 +26,9 @@
         mode: '0600'
       when: cron_stat.stat.exists
 
+    # Reboot system
+    - name: Reboot if crontab was modified
+      ansible.builtin.reboot:
+        msg: "Rebooting after disabling autostart in crontab"
+        reboot_timeout: 300
+      when: cron_stat.stat.exists and (ansible_facts['pkg_mgr'] is defined)

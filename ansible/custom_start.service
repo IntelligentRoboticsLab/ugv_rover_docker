@@ -1,0 +1,22 @@
+[Unit]
+    Description=UGV app (runs on normal boot as jetson)
+    After=network-online.target sound.target
+    Wants=network-online.target
+
+    [Service]
+    Type=simple
+    User=jetson
+    Group=jetson
+    WorkingDirectory=/home/jetson
+    # Give it a sane PATH; no shell rc files are sourced
+    Environment=PATH=/home/jetson/ugv_jetson/ugv-env/bin:/usr/local/bin:/usr/bin:/bin
+    # If your app needs an XDG runtime, let systemd create one for the user session:
+    RuntimeDirectory=app-ugv
+    Environment=XDG_RUNTIME_DIR=/run/user/%U
+    ExecStart=/home/jetson/custom_startup.sh
+    Restart=on-failure
+    RestartSec=3
+
+    [Install]
+    WantedBy=multi-user.target
+

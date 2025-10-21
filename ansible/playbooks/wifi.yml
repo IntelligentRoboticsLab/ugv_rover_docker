@@ -1,0 +1,37 @@
+# playbooks/wifi_force_sta.yml
+---
+- name: Force STA Wi-Fi, kill AP bits, and reboot
+  hosts: all
+  become: yes
+  tasks:
+    # 1) Make sure STA Wi-Fi exists, autoconnects, and is up
+    - name: Connect to Wi-Fi (creates/updates NM profile)
+      ansible.builtin.command:
+        argv: [nmcli, dev, wifi, connect, "{{ ssid }}", password, "{{ psk }}"]
+      register: nm_connect
+      failed_when: false
+      changed_when: nm_connect.rc == 0
+
+    - name: Ensure autoconnect + priority on the profile
+      ansible.builtin.command:
+        argv: [nmcli, connection, modify, "{{ ssid }}",
+               connection.autoconnect, "yes",
+               connection.autoconnect-priority, "100"]
+      register: nm_mod
+      failed_when: nm_mod.rc not in [0, 4]
+      changed_when: nm_mod.rc == 0
+      timeout: 15
+
+    - name: Uninstall AccessPopup new
+      become: true
+      ansible.builtin.shell: |
+        script -qfec 'bash /home/jetson/ugv_jetson/AccessPopup/installconfig.sh' /dev/null <<'EOF'
+        7
+
+        9
+        EOF
+      args:
+        executable: /bin/bash
+      register: uninstall_run
+      timeout: 300
+      changed_when: "'Uninstall complete' in uninstall_run.stdout or 'Uninstalling' in uninstall_run.stdout"

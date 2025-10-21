@@ -1,0 +1,38 @@
+# playbooks/install_packages.yml
+- name: Install required applications
+  hosts: all
+  become: yes
+
+  vars:
+    packages:
+      - espeak
+
+  tasks:
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Install packages
+      ansible.builtin.apt:
+        name: "{{ packages }}"
+        state: present
+    
+    - name: Copy startfile over
+      ansible.builtin.copy:
+        src: ../custom_startup.sh
+        dest: /home/jetson/custom_startup.sh
+        mode: '0755'
+    
+    - name: Add custom service
+      ansible.builtin.copy:
+        src: ../custom_start.service
+        dest: /etc/systemd/system/custom_start.service
+
+    - name: Reload and enable service
+      become: yes
+      ansible.builtin.systemd:
+        daemon_reload: yes
+        name: custom_start.service
+        enabled: yes
+        state: started
