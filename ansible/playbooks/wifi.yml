@@ -1,37 +1,72 @@
-# playbooks/wifi_force_sta.yml
+# playbooks/wifi.yml {NEED ARGUMENTS ssid and psk (password)}
 ---
-- name: Force STA Wi-Fi, kill AP bits, and reboot
+- name: Switch Wi-Fi
   hosts: all
   become: yes
   tasks:
-    # 1) Make sure STA Wi-Fi exists, autoconnects, and is up
-    - name: Connect to Wi-Fi (creates/updates NM profile)
-      ansible.builtin.command:
-        argv: [nmcli, dev, wifi, connect, "{{ ssid }}", password, "{{ psk }}"]
-      register: nm_connect
-      failed_when: false
-      changed_when: nm_connect.rc == 0
+    
+    - name: Copy startfile over
+      ansible.builtin.copy:
+        src: ../custom_startup.py
+        dest: /home/jetson/ugv_jetson/app.py
+        owner: jetson
+        group: jetson
+        mode: '0755'
 
-    - name: Ensure autoconnect + priority on the profile
-      ansible.builtin.command:
-        argv: [nmcli, connection, modify, "{{ ssid }}",
-               connection.autoconnect, "yes",
-               connection.autoconnect-priority, "100"]
-      register: nm_mod
-      failed_when: nm_mod.rc not in [0, 4]
-      changed_when: nm_mod.rc == 0
-      timeout: 15
-
-    - name: Uninstall AccessPopup new
-      become: true
+    # Find an existing NM connection whose SSID == {{ ssid }}
+    - name: Locate Wi-Fi connection profile by SSID
       ansible.builtin.shell: |
-        script -qfec 'bash /home/jetson/ugv_jetson/AccessPopup/installconfig.sh' /dev/null <<'EOF'
-        7
-
-        9
-        EOF
+        set -euo pipefail
+        nmcli -t -f NAME,TYPE connection show | awk -F: '$2=="wifi"{print $1}' |
+        while read -r n; do
+          ss=$(nmcli -g 802-11-wireless.ssid connection show "$n" 2>/dev/null || true)
+          [ "$ss" = "{{ ssid }}" ] && { echo "$n"; exit 0; }
+        done
       args:
         executable: /bin/bash
-      register: uninstall_run
-      timeout: 300
-      changed_when: "'Uninstall complete' in uninstall_run.stdout or 'Uninstalling' in uninstall_run.stdout"
+      register: wifi_con
+      changed_when: false
+      failed_when: false
+
+    # Create the profile if it doesn't exist (use the SSID as con-name)
+    - name: Create Wi-Fi profile if missing
+      no_log: true
+      ansible.builtin.command:
+        argv:
+          - nmcli
+          - connection
+          - add
+          - type
+          - wifi
+          - ifname
+          - "*"
+          - con-name
+          - "{{ ssid }}"
+          - ssid
+          - "{{ ssid }}"
+      when: wifi_con.stdout | trim == ""
+      register: nm_add
+      changed_when: nm_add.rc == 0
+
+    # Make it correct + autoconnect, then bring it up
+    - name: Set PSK, autoconnect, priority and activate
+      no_log: true
+      ansible.builtin.shell: |
+        set -euo pipefail
+        name="{{ (wifi_con.stdout | trim) if (wifi_con.stdout | trim) else ssid }}"
+        nmcli connection modify "$name" \
+          wifi-sec.key-mgmt wpa-psk \
+          wifi-sec.psk "{{ psk }}" \
+          connection.autoconnect yes \
+          connection.autoconnect-priority 100
+      args:
+        executable: /bin/bash
+    
+    - name: Reboot via systemd-run after 2s, then end
+      become: true
+      ansible.builtin.command: >
+        systemd-run --quiet --unit ansible-reboot --on-active=2s /sbin/reboot
+      async: 1
+      poll: 0
+      ignore_errors: true
+      changed_when: true

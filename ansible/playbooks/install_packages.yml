@@ -1,0 +1,34 @@
+# playbooks/install_packages.yml
+- name: Install required applications
+  hosts: all
+  become: yes
+
+  vars:
+    packages:
+      - espeak
+
+  tasks:
+    # Set hostname
+    - name: Set hostname based on inventory name
+      hosts: all
+      become: true
+      tasks:
+        - name: Set hostname
+          ansible.builtin.hostname:
+            name: "{{ inventory_hostname }}"
+
+    - name: Update /etc/hosts for local resolution
+      ansible.builtin.lineinfile:
+        path: /etc/hosts
+        regexp: '^127\.0\.1\.1'
+        line: "127.0.1.1 {{ inventory_hostname }}"
+
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Install packages
+      ansible.builtin.apt:
+        name: "{{ packages }}"
+        state: present

@@ -1,0 +1,37 @@
+# playbooks/wifi.yml {NEED ARGUMENTS ssid and psk (password)}
+---
+- name: Switch Wi-Fi
+  hosts: all
+  become: yes
+  tasks:
+    
+    - name: Uninstall AccessPopup new
+      become: true
+      ansible.builtin.shell: |
+        script -qfec 'bash /home/jetson/ugv_jetson/AccessPopup/installconfig.sh' /dev/null <<'EOF'
+        7
+
+        9
+        EOF
+      args:
+        executable: /bin/bash
+      register: uninstall_run
+      timeout: 300
+      changed_when: "'Uninstall complete' in uninstall_run.stdout or 'Uninstalling' in uninstall_run.stdout"
+
+    - name: Reload and enable service
+      become: yes
+      ansible.builtin.systemd:
+        daemon_reload: yes
+        name: custom_start.service
+        enabled: yes
+        state: started
+    
+    - name: Reboot via systemd-run after 2s, then end
+      become: true
+      ansible.builtin.command: >
+        systemd-run --quiet --unit ansible-reboot --on-active=2s /sbin/reboot
+      async: 1
+      poll: 0
+      ignore_errors: true
+      changed_when: true
