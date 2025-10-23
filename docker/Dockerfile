@@ -53,7 +53,7 @@ RUN sed -i 's/#\?PermitRootLogin .*/PermitRootLogin yes/' /etc/ssh/sshd_config &
     sed -i 's/#\?X11DisplayOffset .*/X11DisplayOffset 10/' /etc/ssh/sshd_config
 
 # Set the root password at build time (override via --build-arg)
-ARG ROOT_PASSWORD=jetson
+ARG ROOT_PASSWORD=uvarobolab
 RUN echo "root:${ROOT_PASSWORD}" | chpasswd
 
 EXPOSE 23
