@@ -1,7 +1,19 @@
 [initial]
 init ansible_host=192.168.50.5 ansible_user=jetson ansible_password=jetson
 
-[rovers]
-rover-05 ansible_host=192.168.0.195 ansible_user=jetson ansible_password=jetson
-rover-08 ansible_host=192.168.0.105 ansible_user=jetson ansible_password=jetson
-rover-09 ansible_host=192.168.0.171 ansible_user=jetson ansible_password=jetson
+[rovers_robolab]
+rover-01 ansible_host=10.0.80.1 ansible_user=jetson ansible_password=uvarobolab
+rover-02 ansible_host=10.0.80.2 ansible_user=jetson ansible_password=uvarobolab
+rover-03 ansible_host=10.0.80.3 ansible_user=jetson ansible_password=uvarobolab
+rover-04 ansible_host=10.0.80.4 ansible_user=jetson ansible_password=uvarobolab
+rover-05 ansible_host=10.0.80.5 ansible_user=jetson ansible_password=uvarobolab
+rover-06 ansible_host=10.0.80.6 ansible_user=jetson ansible_password=uvarobolab
+rover-07 ansible_host=10.0.80.7 ansible_user=jetson ansible_password=uvarobolab
+rover-08 ansible_host=10.0.80.8 ansible_user=jetson ansible_password=uvarobolab
+rover-09 ansible_host=10.0.80.9 ansible_user=jetson ansible_password=uvarobolab
+rover-10 ansible_host=10.0.80.10 ansible_user=jetson ansible_password=uvarobolab
+
+
+[rovers_vislab]
+rover-13 ansible_host=192.168.0.186 ansible_user=jetson ansible_password=jetson
+

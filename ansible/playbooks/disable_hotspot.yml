@@ -5,20 +5,6 @@
   become: yes
   tasks:
     
-    - name: Uninstall AccessPopup new
-      become: true
-      ansible.builtin.shell: |
-        script -qfec 'bash /home/jetson/ugv_jetson/AccessPopup/installconfig.sh' /dev/null <<'EOF'
-        7
-
-        9
-        EOF
-      args:
-        executable: /bin/bash
-      register: uninstall_run
-      timeout: 300
-      changed_when: "'Uninstall complete' in uninstall_run.stdout or 'Uninstalling' in uninstall_run.stdout"
-
     - name: Reload and enable service
       become: yes
       ansible.builtin.systemd:

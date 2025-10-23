@@ -7,11 +7,24 @@
     
     - name: Copy startfile over
       ansible.builtin.copy:
-        src: ../custom_startup.py
+        src: ../custom_app.py
         dest: /home/jetson/ugv_jetson/app.py
         owner: jetson
         group: jetson
         mode: '0755'
+
+    # Lower priority of all existing Wi-Fi connections to 50
+    - name: Set all existing Wi-Fi connection priorities lower (50)
+      ansible.builtin.shell: |
+        set -euo pipefail
+        nmcli -t -f NAME,TYPE connection show | awk -F: '$2=="wifi"{print $1}' |
+        while read -r name; do
+          nmcli connection modify "$name" connection.autoconnect-priority 50 || true
+        done
+      args:
+        executable: /bin/bash
+      changed_when: false
+      become: true
 
     # Find an existing NM connection whose SSID == {{ ssid }}
     - name: Locate Wi-Fi connection profile by SSID
@@ -61,6 +74,21 @@
           connection.autoconnect-priority 100
       args:
         executable: /bin/bash
+    
+    - name: Uninstall AccessPopup new
+      become: true
+      ansible.builtin.shell: |
+        script -qfec 'bash /home/jetson/ugv_jetson/AccessPopup/installconfig.sh' /dev/null <<'EOF'
+        7
+
+        9
+        EOF
+      args:
+        executable: /bin/bash
+      register: uninstall_run
+      async: 1
+      timeout: 300
+      changed_when: "'Uninstall complete' in uninstall_run.stdout or 'Uninstalling' in uninstall_run.stdout"
     
     - name: Reboot via systemd-run after 2s, then end
       become: true
