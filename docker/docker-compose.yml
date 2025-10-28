@@ -16,4 +16,5 @@ services:
       - /dev:/dev
       - ./entrypoint.sh:/usr/local/bin/entrypoint.sh:ro
     entrypoint: ["/usr/local/bin/entrypoint.sh"]
+    restart: always
     command: ["/usr/sbin/sshd","-D","-e","-p","23"]
